@@ -1,50 +1,59 @@
 # Event Квартал
 
-Лендинг + CRM-админка для агентства детских праздников. Пет-проект для друга.
+Лендинг + CRM-админка для агентства детских праздников.
+
+## 🚀 Деплой одной кнопкой
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fleofftheslayer1326-create%2Fevent-kvartal%2Ftree%2Fproduction&env=ADMIN_PASSWORD,ADMIN_SESSION_SECRET&envDescription=ADMIN_PASSWORD%20—%20пароль%20админки.%20ADMIN_SESSION_SECRET%20—%20случайная%20строка%2032%2B%20символов&stores=%5B%7B%22type%22%3A%22postgres%22%7D%5D&project-name=event-kvartal&repository-name=event-kvartal)
+
+После клика Vercel:
+
+1. Склонирует ветку `production` в ваш аккаунт.
+2. Попросит создать **Vercel Postgres** (один клик, бесплатный free-tier).
+3. Запросит `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET`.
+4. Задеплоит и выдаст URL вида `https://event-kvartal-xxxx.vercel.app`.
+
+Билд автоматически выполнит `prisma migrate deploy` и создаст таблицу `Lead` в Postgres.
 
 ## Стек
 
 - **Next.js 16** (App Router) + React 19 + TypeScript
 - **Tailwind v4** — стилизация, токены через `@theme`
 - **Framer Motion** + **GSAP** + **Lenis** — анимации и smooth scroll
-- **Prisma 6** + **SQLite** — CRM-база
+- **Prisma 6** + **Postgres** (production) / **SQLite** (ветка `main`, для local dev)
 - **Cookie-based auth** — простая защита админки
 
-## Запуск
+## Локальный запуск
+
+Ветка `main` — настроена под SQLite, никаких внешних БД:
 
 ```bash
+git checkout main
 npm install
 npx prisma db push
 npm run dev
 ```
 
-Открыть [http://localhost:3000](http://localhost:3000) — лендинг, [http://localhost:3000/admin](http://localhost:3000/admin) — админка.
+Открыть [http://localhost:3000](http://localhost:3000) — лендинг,
+[http://localhost:3000/admin](http://localhost:3000/admin) — админка (пароль `admin`).
 
-## Конфиг
+## Переменные окружения
 
-Все переменные — в `.env`:
-
-```env
-DATABASE_URL="file:./prisma/dev.db"
-
-# Пароль админки. Поменяй перед деплоем.
-ADMIN_PASSWORD="admin"
-ADMIN_SESSION_SECRET="change-me-in-prod-very-secret-string-32+chars"
-
-# Telegram-уведомления о новых заявках (опционально)
-TELEGRAM_BOT_TOKEN=""
-TELEGRAM_CHAT_ID=""
-
-# Канонический URL для sitemap/robots
-NEXT_PUBLIC_SITE_URL="https://event-kvartal.ru"
-```
+| Переменная | Назначение | Где задать |
+|---|---|---|
+| `DATABASE_URL` | Postgres connection string | Vercel Postgres подставит сам |
+| `ADMIN_PASSWORD` | пароль админки | Vercel UI при импорте |
+| `ADMIN_SESSION_SECRET` | секрет для подписи cookie (32+ симв.) | Vercel UI при импорте |
+| `TELEGRAM_BOT_TOKEN` | (опц.) уведомления о заявках | Vercel UI настройки |
+| `TELEGRAM_CHAT_ID` | (опц.) куда слать уведомления | Vercel UI настройки |
+| `NEXT_PUBLIC_SITE_URL` | (опц.) канон-домен для sitemap | Vercel UI настройки |
 
 ### Telegram-уведомления
 
 1. Создать бота через [@BotFather](https://t.me/BotFather), получить токен.
-2. Добавить бота в чат (или написать ему лично) — отправить любое сообщение.
-3. Узнать chat_id: `https://api.telegram.org/bot<TOKEN>/getUpdates`.
-4. Заполнить `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`.
+2. Написать боту любое сообщение.
+3. Узнать `chat_id`: `https://api.telegram.org/bot<TOKEN>/getUpdates`.
+4. В Vercel → Settings → Environment Variables — добавить `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`.
 
 Если переменные пустые — уведомления молча пропускаются.
 
@@ -71,12 +80,12 @@ src/
         leads/export/route.ts      # CSV-экспорт
     sitemap.ts, robots.ts
   components/
-    nav, hero, services, cases,
-    process, lead-form, faq,
-    footer, marquee-line,
+    nav, hero, services, cases, gallery,
+    process, advantages, testimonials,
+    lead-form, faq, footer, marquee-line,
     floating-decor, smooth-scroll
   lib/
-    config.ts                      # бренд, услуги, кейсы, FAQ
+    config.ts                      # бренд, услуги, кейсы, отзывы, FAQ
     db.ts                          # singleton PrismaClient
     auth.ts                        # cookie + HMAC
     notify.ts                      # Telegram
@@ -84,19 +93,17 @@ src/
   middleware.ts                    # защита /admin/*
 prisma/
   schema.prisma                    # модель Lead
+  migrations/0_init/migration.sql  # начальная Postgres-миграция
 ```
 
 ## Контент
 
-Все тексты, услуги, цены, FAQ — в `src/lib/config.ts`. Поменять название/контакты/услуги — там одно место.
+Все тексты, услуги, цены, отзывы, FAQ — в `src/lib/config.ts`. Менять
+название / контакты / услуги — там одно место.
 
-## Деплой
+## После деплоя
 
-Подходит Vercel или любой Node-хост. Для Beget (как Арника) лучше пересобрать в статику + отдельный API на Node, либо взять VPS.
-
-Перед деплоем:
-
-- сгенерить новый `ADMIN_SESSION_SECRET` (32+ случайных символа);
-- задать сильный `ADMIN_PASSWORD`;
-- сменить `NEXT_PUBLIC_SITE_URL` на боевой домен;
-- настроить Telegram-уведомления.
+- Откройте `/admin/login`, войдите с `ADMIN_PASSWORD`.
+- Отправьте тестовую заявку через форму на лендинге.
+- Карточка появится в канбане «Новые».
+- Можно покликать статусы, добавить заметку, экспортировать CSV.

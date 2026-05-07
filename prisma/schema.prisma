@@ -1,0 +1,39 @@
+// Event Квартал — CRM schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Customer-facing
+  name     String
+  phone    String
+  email    String?
+  format   String?  // "Детский ДР" / "Утренник" / etc
+  date     String?  // ISO date string from <input type=date>
+  kids     String?
+  message  String?
+
+  // Tracking
+  source    String?  @default("landing")  // landing | telegram | manual
+  userAgent String?
+  referrer  String?
+  ip        String?
+
+  // Workflow
+  status    String   @default("new")  // new | in_progress | confirmed | done | cancelled
+  notes     String?  // менеджерские заметки
+  managerId String?
+
+  @@index([status])
+  @@index([createdAt])
+}

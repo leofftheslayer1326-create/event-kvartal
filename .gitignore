@@ -1,0 +1,7 @@
+data/*.db
+data/*.sqlite
+data/uploads/*
+!.gitkeep
+_source/
+.DS_Store
+
